@@ -14,11 +14,11 @@ directory "/db/couchdb/log" do
   recursive true
 end
 
-template "/etc/couchdb/couch.ini" do
+template "/etc/couchdb/default.ini" do
   owner 'root'
   group 'root'
   mode 0644
-  source "couch.ini.erb"
+  source "default.ini.erb"
   variables({
     :basedir => '/db/couchdb',
     :logfile => '/db/couchdb/log/couch.log',
@@ -37,16 +37,9 @@ remote_file "/etc/init.d/couchdb" do
   mode 0755
 end
 
-execute "add-couchdb-to-default-run-level" do
-  command %Q{
-    rc-update add couchdb default
-  }
-  not_if "rc-status | grep couchdb"
-end
-
-execute "ensure-couchdb-is-running" do
-  command %Q{
-    /etc/init.d/couchdb restart
-  }
-  not_if "/etc/init.d/couchdb status | grep 'status:  started'"
+service "couchdb" do
+  start_command "/etc/init.d/couchdb start &> /dev/null"
+  stop_command "/etc/init.d/couchdb stop &> /dev/null"
+  supports [ :restart, :status ]
+  action [ :enable, :start ]
 end
